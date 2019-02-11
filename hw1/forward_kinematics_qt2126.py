@@ -1,5 +1,8 @@
 import math
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 def form_homo_trans(a, alpha, d, theta):
@@ -33,10 +36,20 @@ def convert_frame(coords, trans):
     # Returns: 4*1 numpy array
     return np.matmul(trans, coords)
 
+def plot_drawing(xs, ys, zs):
+    """ Plot the drawing """
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.plot(xs, ys, zs)
+    plt.show()
+
 def main():
+    xs, ys, zs, output = [], [], [], []
+
     with open('JointData.txt', 'r') as f:
         lines = f.readlines()
     # print(lines)
+
     for line in lines:
         line = line[:-1] # remove trailing newline
         t1, t2, t3, t4, t5, t6, t7 = line.split(' ')
@@ -52,6 +65,15 @@ def main():
         # print(fk_map)
         coords = convert_frame(form_homo_rep(0, 0, 0), fk_map)
         # print(coords)
+        xs.append(coords[0][0])
+        ys.append(coords[1][0])
+        zs.append(coords[2][0])
+        output.append("{} {} {}\n".format(coords[0][0], coords[1][0], coords[2, 0]))
+
+    with open('MarkerTipData.txt', 'w') as f:
+        f.writelines(output)
+
+    plot_drawing(xs, ys, zs)
 
 if __name__ == "__main__":
     main()
