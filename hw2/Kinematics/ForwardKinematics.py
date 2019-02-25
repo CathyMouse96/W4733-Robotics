@@ -16,11 +16,14 @@ def form_homo_trans(a, alpha, d, theta):
 def fk(dh_params):
     """ Computes the forward kinematics with a list of DH parameters """
     # dh_params: List[List]
-    # Returns: 4*4 sympy array
-    result = eye(4) # identity array
+    # Returns: List of (n+1) 4*4 sympy arrays
+    results = []
+    result = eye(4) # identity array, T00
+    results.append(result)
     for dh_param in dh_params:
-        result = result * form_homo_trans(*dh_param)
-    return result
+        result *= form_homo_trans(*dh_param) # T10 to Tn0
+        results.append(result)
+    return results
 
 def form_homo_rep(x, y, z):
     """ Returns a homogeneous representation from coordinates """
@@ -33,11 +36,7 @@ def convert_frame(coords, trans):
     # Returns: 4*1 sympy array
     return trans * coords
 
-def element_at(matrix, row, col):
-    """ Get the scalar at some row and col """
-    return matrix.row(row).col(col).dot(eye(1))
-
 def get_e_pos(fk_map):
     """ Get end effector position from fk map """
     coords = convert_frame(form_homo_rep(0, 0, 0), fk_map)
-    return element_at(coords, 0, 0), element_at(coords, 1, 0), element_at(coords, 2, 0)
+    return coords[0, 0], coords[1, 0], coords[2, 0]
