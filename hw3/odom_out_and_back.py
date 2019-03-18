@@ -149,15 +149,10 @@ class OutAndBack():
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
                 break
-            elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line (not initial hit)
-                if hit_point and self.dist_to_goal(position) < self.dist_to_goal(hit_point) and self.dist_to_point(position, hit_point.x, hit_point.y) >= self.proximity_tolerance:
+            elif not direction == MLINE and abs(position.y) <= 0.2 and hit_point and self.dist_to_goal(position) - self.dist_to_goal(hit_point) < -0.3 and self.dist_to_point(position, hit_point.x, hit_point.y) >= self.proximity_tolerance:
                     # Continue along m-line!
-                    print("Leave point found. Exiting for now.")
-                    # Stop the robot
-                    self.cmd_vel.publish(Twist())
-                    break
-                elif not direction == MLINE and self.dist_to_point(position, hit_point.x, hit_point.y) < self.proximity_tolerance:
-                    print("No solution! Exiting...")
+		    print(self.dist_to_goal(position), self.dist_to_goal(hit_point), self.dist_to_point(position, hit_point.x, hit_point.y))
+                    print("Leave point found. Exiting for now. Coordinates: (" + str(position.x) + ", " + str(position.y) + ")")
                     # Stop the robot
                     self.cmd_vel.publish(Twist())
                     break
