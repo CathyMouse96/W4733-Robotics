@@ -109,8 +109,8 @@ class OutAndBack():
         y_start = position.y
 
         # Goal position values
-        x_goal = x_start + goal_distance
-        y_goal = y_start
+        self.x_goal = x_start + goal_distance
+        self.y_goal = y_start
         
         # Keep track of the distance traveled
         # distance = 0
@@ -138,7 +138,7 @@ class OutAndBack():
 	prevdirection = None
         
         while not rospy.is_shutdown():
-            if self.goaltest(position, x_goal, y_goal): # Success!
+            if self.goaltest(position): # Success!
                 print("Robot reached goal! Exiting...")
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
@@ -149,19 +149,18 @@ class OutAndBack():
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
                 break
-            # elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line
-                # if not hit_point or not self.goaltest(position, hit_point.x, hit_point.y): # not reached before
+            elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line (not initial hit)
+                if hit_point and self.dist_to_goal(position) < self.dist_to_goal(hit_point) and self.dist_to_point(position, hit_point.x, hit_point.y) >= self.proximity_tolerance:
                     # Continue along m-line!
-                    # print("Leave point found. Exiting for now.")
+                    print("Leave point found. Exiting for now.")
                     # Stop the robot
-                    # self.cmd_vel.publish(Twist())
-                    # break
-                    # pass
-                # else:
-                    # print("No solution! Exiting...")
+                    self.cmd_vel.publish(Twist())
+                    break
+                elif not direction == MLINE and self.dist_to_point(position, hit_point.x, hit_point.y) < self.proximity_tolerance:
+                    print("No solution! Exiting...")
                     # Stop the robot
-                    # self.cmd_vel.publish(Twist())
-                    # break
+                    self.cmd_vel.publish(Twist())
+                    break
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
                 print("Robot reached obstacle! Turning left...")
 		print(self.ahead_range)
@@ -247,9 +246,14 @@ class OutAndBack():
         # Stop the robot for good
         # self.cmd_vel.publish(Twist())
 
-    def goaltest(self, position, x_goal, y_goal):
-        dist = ((position.x - x_goal) ** 2 + (position.y - y_goal) ** 2) ** .5
-        return dist <= self.proximity_tolerance
+    def dist_to_point(self, position, x, y):
+        return ((position.x - x) ** 2 + (position.y - y) ** 2) ** .5
+    
+    def dist_to_goal(self, position):
+        return ((position.x - self.x_goal) ** 2 + (position.y - self.y_goal) ** 2) ** .5
+    
+    def goaltest(self, position):
+        return self.dist_to_goal(position) <= self.proximity_tolerance
 
     def get_odom(self):
         # Get the current transform between the odom and base frames
