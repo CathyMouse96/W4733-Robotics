@@ -54,7 +54,7 @@ class OutAndBack():
         linear_speed = 0.15
         
         # Set the travel distance in meters
-        goal_distance = 10.0
+        goal_distance = 2.0
 
         # Set the rotation speed in radians per second
         angular_speed = 0.5
@@ -112,19 +112,41 @@ class OutAndBack():
         hit_p = None
 
         # Threshold distance to obstacle before turning
-        threshold_dist = 0.05
+        threshold_dist = 0.50
         
         while not rospy.is_shutdown():
             if self.goaltest(position, x_goal, y_goal): # Success!
+                print("Robot reached goal! Exiting...")
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
                 break
-            elif self.ahead_range < threshold_dist: # Obstacle encountered
-                # Turn left
-                self.cmd_vel.publish(Twist())
+            elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
+                print("Robot reached obstacle! Turning around...")
+                # Set the movement command to a rotation
+                move_cmd.angular.z = angular_speed
+
+                # Track the last angle measured
+                last_angle = rotation
+        
+                # Track how far we have turned
+                turn_angle = 0
+        
+                while abs(turn_angle + angular_tolerance) < abs(goal_angle) and not rospy.is_shutdown():
+                    # Publish the Twist message and sleep 1 cycle         
+                    self.cmd_vel.publish(move_cmd)
+                    r.sleep()
+
+                    # Get the current rotation
+                    (position, rotation) = self.get_odom()
+            
+                    # Compute the amount of rotation since the last loop
+                    delta_angle = normalize_angle(rotation - last_angle)
+
+                    # Add to the running total
+                    turn_angle += delta_angle
+                    last_angle = rotation
                 break
             else:
-		        print(self.ahead_range)
                 # Publish the Twist message and sleep 1 cycle
                 self.cmd_vel.publish(move_cmd)
                 r.sleep()
@@ -132,32 +154,8 @@ class OutAndBack():
                 # Get the current position
                 (position, rotation) = self.get_odom()
                 # Compute the Euclidean distance from the start
-                distance = sqrt(pow((position.x - x_start), 2) + 
-                                pow((position.y - y_start), 2))
-        
-        # Set the movement command to a rotation
-        # move_cmd.angular.z = angular_speed
-            
-        # Track the last angle measured
-        # last_angle = rotation
-        
-        # Track how far we have turned
-        # turn_angle = 0
-        
-        # while abs(turn_angle + angular_tolerance) < abs(goal_angle) and not rospy.is_shutdown():
-            # Publish the Twist message and sleep 1 cycle         
-            # self.cmd_vel.publish(move_cmd)
-            # r.sleep()
-            
-            # Get the current rotation
-            # (position, rotation) = self.get_odom()
-            
-            # Compute the amount of rotation since the last loop
-            # delta_angle = normalize_angle(rotation - last_angle)
-            
-            # Add to the running total
-            # turn_angle += delta_angle
-            # last_angle = rotation
+                # distance = sqrt(pow((position.x - x_start), 2) + 
+                #                 pow((position.y - y_start), 2))
             
         # Stop the robot before the next leg
         # move_cmd = Twist()
