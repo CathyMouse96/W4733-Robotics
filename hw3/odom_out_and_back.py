@@ -45,19 +45,19 @@ class OutAndBack():
         self.scan_sub = rospy.Subscriber('/scan', LaserScan, self.scan_callback)
         
         # How fast will we update the robot's movement?
-        rate = 20
+        rate = 5
         
         # Set the equivalent ROS rate variable
         r = rospy.Rate(rate)
         
         # Set the forward linear speed to 0.25 meters per second 
-        linear_speed = 0.25
+        linear_speed = 0.50
         
         # Set the travel distance in meters
         goal_distance = 10.0
 
         # Set the rotation speed in radians per second
-        angular_speed = 0.5 # 57/2 degrees per second
+        angular_speed = 1.0 # 57 degrees per second
         
         # Set the angular tolerance in degrees converted to radians
         # angular_tolerance = radians(1.0)
@@ -129,7 +129,10 @@ class OutAndBack():
         }
 
         # Initial direction
-        direction = FORWARD
+        direction = MLINE
+
+	# Previous direction
+	prevdirection = None
         
         while not rospy.is_shutdown():
             if self.goaltest(position, x_goal, y_goal): # Success!
@@ -139,7 +142,9 @@ class OutAndBack():
                 break
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
                 print("Robot reached obstacle! Turning left...")
+		print(self.ahead_range)
 
+		prevdirection = direction
                 direction = TURNLEFT
 
                 # Publish the Twist message and sleep 1 cycle
@@ -171,18 +176,33 @@ class OutAndBack():
                 #     last_angle = rotation
                 # break
             else:
+		print(self.ahead_range)
+		rospy.sleep(1)
                 if direction == MLINE:
                     # following mline, continue moving forward
+		    print('Keep following m-line...')
                     pass
                 elif direction == TURNLEFT:
-                    # originally turning left, no more obstacles! turn right
-                    # but if came from right - move forward to avoid loop
-                    direction = FORWARD
+                    # originally turning left, no more obstacles! move forward
+                    prevdirection = direction
+		    direction = FORWARD
+		    print('Moving forward...')
                 elif direction == FORWARD:
-                    # try turning right
-                    direction = TURNRIGHT
+                    # try turning right, but if came from right, move forward
+		    # if prevdirection == TURNLEFT:
+			# prevdirection = direction
+			# print('Keep moving forward...')
+		    # else:
+			# prevdirection = direction
+                   	# direction = TURNRIGHT
+			# print('Turning right...')
+		    prevdirection = direction
+		    direction = TURNRIGHT
+		    print('Turning right...')
                 elif direction == TURNRIGHT:
-                    pass
+		    prevdirection = direction
+		    direction = FORWARD
+		    print('Moving forward...')
 
                 # Publish the Twist message and sleep 1 cycle
                 self.cmd_vel.publish(move_cmds[direction])
