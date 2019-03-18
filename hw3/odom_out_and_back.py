@@ -51,19 +51,22 @@ class OutAndBack():
         r = rospy.Rate(rate)
         
         # Set the forward linear speed to 0.25 meters per second 
-        linear_speed = 0.50
+        linear_speed = 0.40
         
         # Set the travel distance in meters
         goal_distance = 10.0
 
         # Set the rotation speed in radians per second
-        angular_speed = 1.0 # 57 degrees per second
+        angular_speed = 0.5
         
         # Set the angular tolerance in degrees converted to radians
         # angular_tolerance = radians(1.0)
         
         # Set the rotation angle to Pi radians (180 degrees)
         # goal_angle = pi
+
+        # Set the proximity tolerance
+        self.proximity_tolerance = 0.30
 
         # Initialize the tf listener
         self.tf_listener = tf.TransformListener()
@@ -113,7 +116,7 @@ class OutAndBack():
         # distance = 0
 
         # Hit point
-        # hit_p = None
+        hit_point = None
 
         # Threshold distance to obstacle before turning
         threshold_dist = 0.80
@@ -140,9 +143,31 @@ class OutAndBack():
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
                 break
+            elif self.ahead_range < self.proximity_tolerance:
+                print("Ouch! I hit something...")
+                print("Exiting...")
+                # Stop the robot
+                self.cmd_vel.publish(Twist())
+                break
+            elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line
+                if hit_point and not self.goaltest(position, hit_point.x, hit_point.y): # not reached before
+                    # Continue along m-line!
+                    print("Leave point found. Exiting for now.")
+                    # Stop the robot
+                    self.cmd_vel.publish(Twist())
+                    break
+                    pass
+                else:
+                    print("No solution! Exiting...")
+                    # Stop the robot
+                    self.cmd_vel.publish(Twist())
+                    break
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
                 print("Robot reached obstacle! Turning left...")
 		print(self.ahead_range)
+
+        if direction == MLINE: # this is a hit point!
+            hit_points.append(position)
 
 		prevdirection = direction
                 direction = TURNLEFT
@@ -223,7 +248,8 @@ class OutAndBack():
         # self.cmd_vel.publish(Twist())
 
     def goaltest(self, position, x_goal, y_goal):
-        return position.x == x_goal and position.y == y_goal
+        dist = ((position.x - x_goal) ** 2 + (position.y - y_goal) ** 2) ** .5
+        return dist <= self.proximity_tolerance
 
     def get_odom(self):
         # Get the current transform between the odom and base frames
