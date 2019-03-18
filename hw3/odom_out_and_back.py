@@ -22,12 +22,13 @@
       
 """
 
+import sys
 import rospy
 from geometry_msgs.msg import Twist, Point, Quaternion
 from sensor_msgs.msg import LaserScan
 import tf
 from rbx1_nav.transform_utils import quat_to_angle, normalize_angle
-from math import radians, copysign, sqrt, pow, pi
+from math import radians, copysign, sqrt, pow, pi, isnan
 
 class OutAndBack():
     def __init__(self):
@@ -41,7 +42,7 @@ class OutAndBack():
         self.cmd_vel = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=5)
 
         # Subscriber to obtain the distance to nearest obstacle
-        self.scan_sub = rospy.Subscriber('scan', LaserScan, scan_callback)
+        self.scan_sub = rospy.Subscriber('/scan', LaserScan, self.scan_callback)
         
         # How fast will we update the robot's movement?
         rate = 20
@@ -114,7 +115,8 @@ class OutAndBack():
 
             # Enter the loop to move along a side
             while not goaltest(position, x_goal, y_goal) and not rospy.is_shutdown():
-                while g_range_ahead > 0.01: # no obstacle
+                while self.ahead_range > 0.01: # no obstacle
+		    print(self.ahead_range)
                     # Publish the Twist message and sleep 1 cycle
                     self.cmd_vel.publish(move_cmd)
                 
@@ -175,9 +177,12 @@ class OutAndBack():
 
         return (Point(*trans), quat_to_angle(Quaternion(*rot)))
     
-    def scan_callback(msg):
-        global g_range_ahead
-        g_range_ahead = min(msg.ranges)
+    def scan_callback(self, msg):
+	laser_min = msg.range_max
+	for i in msg.ranges:
+	    if not isnan(i):
+		laser_min = min(laser_min, i)
+	self.ahead_range = laser_min
         
     def shutdown(self):
         # Always stop the robot when shutting down the node.
