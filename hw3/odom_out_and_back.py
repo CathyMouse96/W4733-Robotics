@@ -149,27 +149,28 @@ class OutAndBack():
                 # Stop the robot
                 self.cmd_vel.publish(Twist())
                 break
-            elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line
-                if hit_point and not self.goaltest(position, hit_point.x, hit_point.y): # not reached before
+            # elif not direction == MLINE and abs(position.y) <= 0.3: # Reached point on m-line
+                # if not hit_point or not self.goaltest(position, hit_point.x, hit_point.y): # not reached before
                     # Continue along m-line!
-                    print("Leave point found. Exiting for now.")
+                    # print("Leave point found. Exiting for now.")
                     # Stop the robot
-                    self.cmd_vel.publish(Twist())
-                    break
-                    pass
-                else:
-                    print("No solution! Exiting...")
+                    # self.cmd_vel.publish(Twist())
+                    # break
+                    # pass
+                # else:
+                    # print("No solution! Exiting...")
                     # Stop the robot
-                    self.cmd_vel.publish(Twist())
-                    break
+                    # self.cmd_vel.publish(Twist())
+                    # break
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
                 print("Robot reached obstacle! Turning left...")
 		print(self.ahead_range)
 
-        if direction == MLINE: # this is a hit point!
-            hit_points.append(position)
+                if direction == MLINE: # this is a hit point!
+		    print("Hit point found. Coordinates: (" + str(position.x) + ", " + str(position.y) + ")")
+                    hit_point = position
 
-		prevdirection = direction
+	        prevdirection = direction
                 direction = TURNLEFT
 
                 # Publish the Twist message and sleep 1 cycle
@@ -202,7 +203,6 @@ class OutAndBack():
                 # break
             else:
 		print(self.ahead_range)
-		rospy.sleep(1)
                 if direction == MLINE:
                     # following mline, continue moving forward
 		    print('Keep following m-line...')
