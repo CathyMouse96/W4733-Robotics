@@ -50,20 +50,20 @@ class OutAndBack():
         # Set the equivalent ROS rate variable
         r = rospy.Rate(rate)
         
-        # Set the forward linear speed to 0.15 meters per second 
-        linear_speed = 0.15
+        # Set the forward linear speed to 0.25 meters per second 
+        linear_speed = 0.25
         
         # Set the travel distance in meters
-        goal_distance = 2.0
+        goal_distance = 10.0
 
         # Set the rotation speed in radians per second
-        angular_speed = 0.5
+        angular_speed = 0.5 # 57/2 degrees per second
         
         # Set the angular tolerance in degrees converted to radians
-        angular_tolerance = radians(1.0)
+        # angular_tolerance = radians(1.0)
         
         # Set the rotation angle to Pi radians (180 degrees)
-        goal_angle = pi
+        # goal_angle = pi
 
         # Initialize the tf listener
         self.tf_listener = tf.TransformListener()
@@ -89,11 +89,15 @@ class OutAndBack():
         # Initialize the position variable as a Point type
         position = Point()
             
-        # Initialize the movement command
-        move_cmd = Twist()
+        # Initialize the movement commands
+        move_cmd_forward = Twist()
+        move_cmd_left = Twist()
+        move_cmd_right = Twist()
         
-        # Set the movement command to forward motion
-        move_cmd.linear.x = linear_speed
+        # Set the movement command to forward/left/right motion
+        move_cmd_forward.linear.x = linear_speed
+        move_cmd_left.angular.z = angular_speed
+        move_cmd_right.angular.z = -angular_speed
         
         # Get the starting position values     
         (position, rotation) = self.get_odom()
@@ -106,13 +110,26 @@ class OutAndBack():
         y_goal = y_start
         
         # Keep track of the distance traveled
-        distance = 0
+        # distance = 0
 
         # Hit point
-        hit_p = None
+        # hit_p = None
 
         # Threshold distance to obstacle before turning
-        threshold_dist = 0.50
+        threshold_dist = 0.80
+
+        # Flags
+        MLINE, FORWARD, TURNLEFT, TURNRIGHT = 0, 1, 2, 3
+
+        move_cmds = {
+            MLINE: move_cmd_forward,
+            FORWARD: move_cmd_forward, 
+            TURNLEFT: move_cmd_left,
+            TURNRIGHT: move_cmd_right
+        }
+
+        # Initial direction
+        direction = FORWARD
         
         while not rospy.is_shutdown():
             if self.goaltest(position, x_goal, y_goal): # Success!
@@ -121,34 +138,54 @@ class OutAndBack():
                 self.cmd_vel.publish(Twist())
                 break
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
-                print("Robot reached obstacle! Turning around...")
+                print("Robot reached obstacle! Turning left...")
+
+                direction = TURNLEFT
+
+                # Publish the Twist message and sleep 1 cycle
+                self.cmd_vel.publish(move_cmds[direction])
+                r.sleep()
+
                 # Set the movement command to a rotation
-                move_cmd.angular.z = angular_speed
+                # move_cmd.angular.z = angular_speed
 
                 # Track the last angle measured
-                last_angle = rotation
+                # last_angle = rotation
         
                 # Track how far we have turned
-                turn_angle = 0
+                # turn_angle = 0
         
-                while abs(turn_angle + angular_tolerance) < abs(goal_angle) and not rospy.is_shutdown():
-                    # Publish the Twist message and sleep 1 cycle         
-                    self.cmd_vel.publish(move_cmd)
-                    r.sleep()
+                # while abs(turn_angle + angular_tolerance) < abs(goal_angle) and not rospy.is_shutdown():
+                    # Publish the Twist message and sleep 1 cycle
+                #     self.cmd_vel.publish(move_cmd)
+                #     r.sleep()
 
                     # Get the current rotation
-                    (position, rotation) = self.get_odom()
+                #     (position, rotation) = self.get_odom()
             
                     # Compute the amount of rotation since the last loop
-                    delta_angle = normalize_angle(rotation - last_angle)
+                #     delta_angle = normalize_angle(rotation - last_angle)
 
                     # Add to the running total
-                    turn_angle += delta_angle
-                    last_angle = rotation
-                break
+                #     turn_angle += delta_angle
+                #     last_angle = rotation
+                # break
             else:
+                if direction == MLINE:
+                    # following mline, continue moving forward
+                    pass
+                elif direction == TURNLEFT:
+                    # originally turning left, no more obstacles! turn right
+                    # but if came from right - move forward to avoid loop
+                    direction = FORWARD
+                elif direction == FORWARD:
+                    # try turning right
+                    direction = TURNRIGHT
+                elif direction == TURNRIGHT:
+                    pass
+
                 # Publish the Twist message and sleep 1 cycle
-                self.cmd_vel.publish(move_cmd)
+                self.cmd_vel.publish(move_cmds[direction])
                 r.sleep()
     
                 # Get the current position
