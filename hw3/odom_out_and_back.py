@@ -37,7 +37,7 @@ class OutAndBack():
         rospy.on_shutdown(self.shutdown)
 
         # Publisher to control the robot's speed
-        self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
+        self.cmd_vel = rospy.Publisher('/mobile_base/commands/velocity', Twist, queue_size=5)
         
         # How fast will we update the robot's movement?
         rate = 20
