@@ -129,6 +129,8 @@ class OutAndBack():
         # Initial direction
         direction = MLINE
 
+        moved_after_hit = False
+
         while not rospy.is_shutdown():
             if self.goaltest(position): # Success!
                 print("Robot reached goal! Exiting...")
@@ -157,6 +159,13 @@ class OutAndBack():
                     (position, rotation) = self.get_odom()
                     
                 direction = MLINE
+                moved_after_hit = False
+            
+            elif not direction == MLINE and abs(position.y - y_start) <= mline_dist and hit_point and self.dist_to_point(position, hit_point) < self.proximity_tolerance and moved_after_hit:
+                print("Oh! No solution! Exiting...")
+                # Stop the robot
+                self.cmd_vel.publish(Twist())
+                break
             
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
                 print("Robot reached obstacle! Turning left...")
@@ -181,6 +190,7 @@ class OutAndBack():
                     # originally turning left, no more obstacles! move forward
                     direction = FORWARD
                     print('Moving forward...')
+                    moved_after_hit = True
                 elif direction == FORWARD:
                     direction = TURNRIGHT
                     print('Turning right...')
