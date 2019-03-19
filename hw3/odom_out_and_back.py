@@ -130,6 +130,7 @@ class OutAndBack():
         direction = MLINE
 
         while not rospy.is_shutdown():
+	    print("Distance to goal: " + str(self.dist_to_goal(position)))
             if self.goaltest(position): # Success!
                 print("Robot reached goal! Exiting...")
                 # Stop the robot
