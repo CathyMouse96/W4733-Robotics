@@ -1,6 +1,8 @@
 Bug2 Implementation
 Qing Teng (qt2126)
 
+Link to videos: https://drive.google.com/open?id=1ufOg04xsXjYbcGkTSoer-4hwJ8xIw7Cl
+
 Strategy:
 1. Follow m-line until near obstacle, i.e. max value of ahead_range drops below threshold
 2. Mark hit point and turn left
@@ -16,3 +18,7 @@ Threshold of encountering m-line: within 0.20m radius.
 Angular tolerance: 5.0 degrees.
 Angular speed: 0.5rad/s.
 Linear speed: 0.40m/s.
+
+Difficulties:
+Hard to determine "same as marked hit point": have to use a range because the robot might not return to the exact same point. But since the robot moves in small steps, using a range means that the robot might be incorrectly determined as having returned to the hit point when in fact it was only starting to move from the hit point!
+To solve this issue, we use a variable moved_after_hit to record the number of forward moves the robot has made since hitting the obstacle. Only if this value is over 30 (we think that the robot has made a sufficient number of moves), when the robot again meets the criteria of being in the same position as the marked hit point, will we count the robot as having returned to the hit point and return "No solution".
