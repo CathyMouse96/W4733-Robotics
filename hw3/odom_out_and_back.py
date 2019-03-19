@@ -59,6 +59,9 @@ class OutAndBack():
         # Set the rotation speed in radians per second
         angular_speed = 0.5
 
+        # Set the angular tolerance in degrees converted to radians
+        angular_tolerance = radians(5.0)
+
         # Set the proximity tolerances
         self.proximity_tolerance = 0.30 # within this distance is considered hit obstacle or reached goal!
         threshold_dist = 0.80 # this is the threshold distance to obstacle before turning
@@ -126,14 +129,7 @@ class OutAndBack():
         # Initial direction
         direction = MLINE
 
-        # Track the last angle measured
-        last_angle = rotation
-
-        # Track how far we have turned
-        turn_angle = 0
-        
         while not rospy.is_shutdown():
-	    turned = False
             if self.goaltest(position): # Success!
                 print("Robot reached goal! Exiting...")
                 # Stop the robot
@@ -149,19 +145,17 @@ class OutAndBack():
             
             elif not direction == MLINE and abs(position.y - y_start) <= mline_dist and hit_point and self.dist_to_goal(position) - self.dist_to_goal(hit_point) < -0.3 and self.dist_to_point(position, hit_point) >= self.proximity_tolerance:
                 # Continue along m-line!
-		print(self.dist_to_goal(position), self.dist_to_goal(hit_point), self.dist_to_point(position, hit_point))
+                print(self.dist_to_goal(position), self.dist_to_goal(hit_point), self.dist_to_point(position, hit_point))
                 print("Leave point found. Coordinates: (" + str(position.x) + ", " + str(position.y) + ")")
                 print("Turned angle: " + str(rotation - start_rotation) + ". Turning back...")
-                # Publish the Twist message and sleep 1 cycle
-                while abs(rotation - start_rotation) > radians(5.0):
-		# move_cmd = Twist()
-                # move_cmd.angular.z = rotation - start_rotation
-		    print(rotation, start_rotation, abs(rotation - start_rotation))
+                
+                while abs(rotation - start_rotation) > angular_tolerance:
+                    print(rotation, start_rotation, abs(rotation - start_rotation))
+                    # Publish the Twist message and sleep 1 cycle
                     self.cmd_vel.publish(move_cmds[TURNLEFT])
                     r.sleep()
-		    (position, rotation) = self.get_odom()
+                    (position, rotation) = self.get_odom()
                     
-                turn_angle = 0
                 direction = MLINE
             
             elif self.ahead_range < threshold_dist: # Obstacle encountered, turn left
@@ -177,7 +171,6 @@ class OutAndBack():
                 # Publish the Twist message and sleep 1 cycle
                 self.cmd_vel.publish(move_cmds[direction])
                 r.sleep()
-		turned = True
 
             else:
                 print(self.ahead_range)
@@ -191,7 +184,6 @@ class OutAndBack():
                 elif direction == FORWARD:
                     direction = TURNRIGHT
                     print('Turning right...')
-		    turned = True
                 elif direction == TURNRIGHT:
                     direction = FORWARD
                     print('Moving forward...')
@@ -202,17 +194,6 @@ class OutAndBack():
     
             # Get the current position
             (position, rotation) = self.get_odom()
-
-            # Compute the amount of rotation since the last loop
-            delta_angle = normalize_angle(rotation - last_angle)
-
-            if turned:
-	        # Add to the running total
-                turn_angle += delta_angle
-		print("delta angle: " + str(delta_angle))
-            last_angle = rotation
-
-	    print("turn angle: " + str(turn_angle))
 
     def dist_to_point(self, position1, position2):
         return ((position1.x - position2.x) ** 2 + (position1.y - position2.y) ** 2) ** .5
