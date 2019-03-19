@@ -1,0 +1,18 @@
+Bug2 Implementation
+Qing Teng (qt2126)
+
+Strategy:
+1. Follow m-line until near obstacle, i.e. max value of ahead_range drops below threshold
+2. Mark hit point and turn left
+3. Move forward
+4. Turn right, if still near obstacle, turn left again
+5. Repeat 3. and 4. until encounter m-line, i.e. position.y is within accepted range of y_start
+6. If position is not the same as marked hit point, and has shorter distance to goal, turn to face goal and repeat from 1. Otherwise, return False.
+
+Parameters:
+Threshold of hitting obstacle/goal/count as same point: within 0.30m radius.
+Threshold of being "near" obstacle: within 0.80m radius.
+Threshold of encountering m-line: within 0.20m radius.
+Angular tolerance: 5.0 degrees.
+Angular speed: 0.5rad/s.
+Linear speed: 0.40m/s.
