@@ -28,16 +28,27 @@ def plot_obstacle(obstacle):
     ys.append(ys[0])
     plt.plot(xs, ys, 'r--', lw=2)
 
-def main():
-    obstacles, _ = read_world_data(obstacles_file, goal_file)
+def grow_obstacles:
+    """ Returns the coordinates of obstacles and goal after growing the obstacles """
+    obstacles, goal = read_world_data(obstacles_file, goal_file)
+    obstacles_new = []
 
     for obstacle in obstacles:
-        plot_obstacle(obstacle)
         obstacle_new = grow_obstacle(obstacle)
-        # print(obstacle_new)
-        plot_obstacle(obstacle_new)
+        obstacles_new.append(obstacle_new)
     
-    plt.show()
+    return obstacles_new, goal
 
-if __name__ == "__main__":
-    main()
+# def main():
+#     obstacles, _ = read_world_data(obstacles_file, goal_file)
+# 
+#     for obstacle in obstacles:
+#         plot_obstacle(obstacle)
+#         obstacle_new = grow_obstacle(obstacle)
+#         # print(obstacle_new)
+#         plot_obstacle(obstacle_new)
+#     
+#     plt.show()
+# 
+# if __name__ == "__main__":
+#     main()
