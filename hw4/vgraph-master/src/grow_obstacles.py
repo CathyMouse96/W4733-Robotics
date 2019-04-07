@@ -28,7 +28,7 @@ def plot_obstacle(obstacle):
     ys.append(ys[0])
     plt.plot(xs, ys, 'r--', lw=2)
 
-def grow_obstacles:
+def grow_obstacles():
     """ Returns the coordinates of obstacles and goal after growing the obstacles """
     obstacles, goal = read_world_data(obstacles_file, goal_file)
     obstacles_new = []
