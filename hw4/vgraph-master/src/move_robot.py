@@ -79,33 +79,13 @@ class FollowPath():
             x_start = position.x
             y_start = position.y
 
-            goal = Point(path[i][0], path[i][1], 0)
-            goal_distance = sqrt((path[i][0]-x_start)**2 + (path[i][1]-y_start)**2)
-            goal_angle = np.arctan2(path[i][1]-y_start, path[i][0]-x_start)
+            # Scale the points in path.txt by 0.01
+            goal = Point(path[i][0]*0.01, path[i][1]*0.01, 0)
+            goal_distance = sqrt((goal.x-x_start)**2 + (goal.y-y_start)**2)
+            goal_angle = np.arctan2(goal.y-y_start, goal.x-x_start)
             
-            # Keep track of the distance traveled
-            distance = 0
-            
-            # Enter the loop to move along a side
-            while distance < goal_distance and not rospy.is_shutdown():
-                print("Moving towards ("+str(goal.x)+", "+str(goal.y)+")!")
-                # Publish the Twist message and sleep 1 cycle         
-                self.cmd_vel.publish(move_cmd)
-                
-                r.sleep()
-        
-                # Get the current position
-                (position, rotation) = self.get_odom()
-                
-                # Compute the Euclidean distance from the start
-                distance = sqrt(pow((position.x - x_start), 2) + 
-                                pow((position.y - y_start), 2))
-
-            # Stop the robot before the rotation
-            move_cmd = Twist()
-            self.cmd_vel.publish(move_cmd)
-            rospy.sleep(1)
-            
+            # Rotate before moving
+            print("Moving towards ("+str(goal.x)+", "+str(goal.y)+")!")                        
             # Set the movement command to a rotation
             move_cmd.angular.z = angular_speed
             
@@ -129,6 +109,32 @@ class FollowPath():
                 # Add to the running total
                 turn_angle += delta_angle
                 last_angle = rotation
+
+            # Stop the robot before moving
+            move_cmd = Twist()
+            self.cmd_vel.publish(move_cmd)
+            rospy.sleep(1)
+
+            # Keep track of the distance traveled
+            distance = 0
+            
+            # Enter the loop to move along a side
+            while distance < goal_distance and not rospy.is_shutdown():
+                print("Moving towards ("+str(goal.x)+", "+str(goal.y)+")!")
+
+                # Publish the Twist message and sleep 1 cycle         
+                self.cmd_vel.publish(move_cmd)          
+                r.sleep()
+        
+                # Get the current position
+                (position, rotation) = self.get_odom()
+
+                
+                # Compute the Euclidean distance from the start
+                distance = sqrt(pow((position.x - x_start), 2) + 
+                                pow((position.y - y_start), 2))
+                print("Current position: (" + str(position.x) + ", " + str(position.y) + "), " + str(distance) + " away from position ("+str(goal.x)+", "+str(goal.y)+")!")
+            
             
             print("Robot reaches ("+str(goal.x)+", "+str(goal.y)+")!")    
             # Stop the robot before the next edge
