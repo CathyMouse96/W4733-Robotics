@@ -79,9 +79,6 @@ class FollowPath():
             goal = Point(path[i][0]*0.01, path[i][1]*0.01, 0)
             goal_distance = sqrt((goal.x-x_start)**2 + (goal.y-y_start)**2)
             goal_angle = np.arctan2(goal.y-y_start, goal.x-x_start)
-            goal_angle -= rotation
-            if goal_angle < 0:
-                goal_angle += 2*pi
             
             # Rotate before moving
             print("Moving towards ("+str(goal.x)+", "+str(goal.y)+")!")                        
