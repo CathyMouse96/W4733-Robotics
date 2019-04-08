@@ -69,6 +69,20 @@ def remove_edges(obstacle_edges, all_edges):
 				
 	return clean_edges
 
+def gene_vgraph(obstacles_file, goal_file):
+	""" API for obtaining generated vgraph """
+	from utils import read_world_data
+	from grow_obstacles import grow_obstacle, plot_obstacle
+	obstacles, goal = read_world_data(obstacles_file, goal_file)
+
+	for obstacle in obstacles:
+		obstacle_new = grow_obstacle(obstacle)
+
+	Oedges, Aedges = generate_edges()
+	edges = remove_edges(Oedges, Aedges)
+
+	return edges, goal
+
 def main():
 	from utils import read_world_data
 	from grow_obstacles import grow_obstacle, plot_obstacle
