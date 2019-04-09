@@ -1,3 +1,6 @@
+## Video Link:
+vgraph.mov in the link https://drive.google.com/drive/folders/1ufOg04xsXjYbcGkTSoer-4hwJ8xIw7Cl?usp=sharing
+
 ## Assumptions
 
 We are assuming that the robot is a 36 x 36 square and the reference point is the square center.
